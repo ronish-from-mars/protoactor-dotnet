@@ -1,0 +1,105 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using EventStore.ClientAPI;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace Proto.Persistence.EventStore
+{
+    public class EventStoreProviderState : IProviderState
+    {
+        private const string SnapshotIndexKey = "snapshotIndexedAtEventNumber";
+        private const string TypeInfoKey = "eventClrTypeName";
+        private readonly IEventStoreConnection _connection;
+
+        public EventStoreProviderState(IEventStoreConnection connection)
+        {
+            _connection = connection;
+        }
+
+        private object DeserializeEvent(RecordedEvent recordedEvent)
+        {
+            return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(recordedEvent.Data), SerializationSettings.StandardSettings());
+        }
+
+        public async Task GetEventsAsync(string actorName, long indexStart, Action<object> callback)
+        {
+            StreamEventsSlice currentSlice;
+            var sliceStart = StreamPosition.Start;
+            var events = new List<ResolvedEvent>();
+            do
+            {
+                currentSlice = await _connection.ReadStreamEventsForwardAsync(actorName, sliceStart, 500, true);
+                sliceStart = currentSlice.NextEventNumber;
+                events.AddRange(currentSlice.Events);
+            } while (!currentSlice.IsEndOfStream);
+            
+            foreach (var evnt in events)
+            {
+                var metadata = evnt.OriginalEvent.Metadata;
+                if (metadata.Length == 0) break;
+                var metaDataString = Encoding.UTF8.GetString(metadata);
+                var metaDataJson = JObject.Parse(metaDataString);
+                var typeInfo = metaDataJson.Property(TypeInfoKey).Value;
+                var eventType = Type.GetType((string)typeInfo);
+                
+                var @event = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(evnt.Event.Data), eventType);
+                callback(@event);
+            }
+        }
+
+        public async Task<Tuple<object, long>> GetSnapshotAsync(string actorName)
+        {
+            var currentSlice = await _connection.ReadStreamEventsBackwardAsync(actorName + "-snapshots", StreamPosition.End, 1, true);
+            if (currentSlice.Status != SliceReadStatus.Success || 
+                currentSlice.Events.Length == 0 || 
+                currentSlice.Events[0].OriginalEvent.Metadata.Length == 0) return null;
+            var resolvedEvent = currentSlice.Events[0];
+            var metaDataString = Encoding.UTF8.GetString(resolvedEvent.OriginalEvent.Metadata);
+            var metaDataJson = JObject.Parse(metaDataString);
+            var snapshotIndex = metaDataJson.Property(SnapshotIndexKey).Value;
+            return Tuple.Create(DeserializeEvent(resolvedEvent.Event), (long)snapshotIndex);
+        }
+
+        public async Task PersistEventAsync(string actorName, long index, object @event)
+        {
+            await SaveEvent(actorName, (int) index, @event, new Dictionary<string, object>
+            {
+                {TypeInfoKey, @event.GetType().AssemblyQualifiedName}
+            });
+        }
+
+        public async Task PersistSnapshotAsync(string actorName, long index, object snapshot)
+        {
+            await SaveEvent(actorName, (int)index, snapshot, new Dictionary<string, object>
+            {
+                {SnapshotIndexKey, index}
+            });
+        }
+
+        private async Task SaveEvent(string streamName, long index, object @event, Dictionary<string, object> metaData)
+        {
+            var jsonString = JsonConvert.SerializeObject(@event, SerializationSettings.StandardSettings());
+            var data = Encoding.UTF8.GetBytes(jsonString);
+            var metaDataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metaData, SerializationSettings.StandardSettings()));
+            var eventData = new EventData(Guid.NewGuid(), @event.GetType().Name, true, data, metaDataBytes);
+            await _connection.AppendToStreamAsync(streamName, (int)index - 1, eventData);
+        }
+
+        public async Task DeleteEventsAsync(string actorName, long fromIndex)
+        {
+            // TODO we could do something like mark all events up until the fromIndex as 
+            // $tb(truncate before) on stream metadata? Setting it makes the 
+            // stream start from whatever number is there (and makes all earlier
+            // events eligible for scavenge) - see https://groups.google.com/forum/#!topic/event-store/yqti9smstoo
+            throw new NotSupportedException("EventStore is an immutable database that does not support deletes");
+        }
+
+        public async Task DeleteSnapshotsAsync(string actorName, long fromIndex)
+        {
+            throw new NotSupportedException("EventStore is an immutable database that does not support deletes");
+        }
+    }
+}
