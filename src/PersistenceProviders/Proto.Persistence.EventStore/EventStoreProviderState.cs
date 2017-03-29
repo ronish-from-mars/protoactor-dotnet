@@ -39,12 +39,10 @@ namespace Proto.Persistence.EventStore
             foreach (var evnt in events)
             {
                 var metadata = evnt.OriginalEvent.Metadata;
-                if (metadata.Length == 0) break;
                 var metaDataString = Encoding.UTF8.GetString(metadata);
                 var metaDataJson = JObject.Parse(metaDataString);
                 var typeInfo = metaDataJson.Property(TypeInfoKey).Value;
                 var eventType = Type.GetType((string)typeInfo);
-                
                 var @event = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(evnt.Event.Data), eventType);
                 callback(@event);
             }
@@ -85,7 +83,8 @@ namespace Proto.Persistence.EventStore
             var data = Encoding.UTF8.GetBytes(jsonString);
             var metaDataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metaData, SerializationSettings.StandardSettings()));
             var eventData = new EventData(Guid.NewGuid(), @event.GetType().Name, true, data, metaDataBytes);
-            await _connection.AppendToStreamAsync(streamName, (int)index - 1, eventData);
+            var expectedVersion = (int) index - 1;
+            await _connection.AppendToStreamAsync(streamName, expectedVersion, eventData);
         }
 
         public async Task DeleteEventsAsync(string actorName, long fromIndex)

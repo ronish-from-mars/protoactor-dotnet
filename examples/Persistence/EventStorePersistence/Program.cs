@@ -28,7 +28,7 @@ namespace EventStorePersistence
             var provider = new EventStoreProvider(eventStoreConnection);
             var props = Actor.FromProducer(() => new MyActor())
                 .WithReceiveMiddleware(Persistence.Using(provider));
-            var pid = Actor.Spawn(props);
+            var pid = Actor.SpawnNamed(props, "test-actor");
             pid.Tell(new RenameCommand { Name = "Christian" });
             pid.Tell(new RenameCommand { Name = "Alex" });
             pid.Tell(new RenameCommand { Name = "Roger" });

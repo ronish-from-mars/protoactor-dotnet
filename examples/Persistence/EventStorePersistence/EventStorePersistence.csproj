@@ -1,21 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>exe</OutputType>
     <TargetFramework>netcoreapp1.1</TargetFramework>
+    <ApplicationIcon />
+    <OutputTypeEx>exe</OutputTypeEx>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\examples\Persistence\Messages\Messages.csproj" />
-    <ProjectReference Include="..\Proto.Persistence.EventStore\Proto.Persistence.EventStore.csproj" />
-    <ProjectReference Include="..\src\Proto.Actor\Proto.Actor.csproj" />
-    <ProjectReference Include="..\src\Proto.Mailbox\Proto.Mailbox.csproj" />
-    <ProjectReference Include="..\src\Proto.Persistence\Proto.Persistence.csproj" />
+    <ProjectReference Include="..\Messages\Messages.csproj" />
+    <ProjectReference Include="..\..\..\src\PersistenceProviders\Proto.Persistence.EventStore\Proto.Persistence.EventStore.csproj" />
+    <ProjectReference Include="..\..\..\src\Proto.Actor\Proto.Actor.csproj" />
+    <ProjectReference Include="..\..\..\src\Proto.Mailbox\Proto.Mailbox.csproj" />
+    <ProjectReference Include="..\..\..\src\Proto.Persistence\Proto.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.Collections.Specialized">
-      <HintPath>..\..\..\Users\tomliversidge\.nuget\packages\system.collections.specialized\4.0.1\ref\netstandard1.3\System.Collections.Specialized.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Users\tomliversidge\.nuget\packages\system.collections.specialized\4.0.1\ref\netstandard1.3\System.Collections.Specialized.dll</HintPath>
     </Reference>
   </ItemGroup>
 
