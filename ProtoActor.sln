@@ -102,6 +102,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto.Persistence.EventStor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventStorePersistence", "examples\Persistence\EventStorePersistence\EventStorePersistence.csproj", "{E7744417-F7A5-43C0-874A-FDAC9F515884}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto.Persistence.EventStore.Tests", "tests\Proto.Persistence.EventStore.Tests\Proto.Persistence.EventStore.Tests.csproj", "{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -507,6 +509,18 @@ Global
 		{E7744417-F7A5-43C0-874A-FDAC9F515884}.Release|x64.Build.0 = Release|Any CPU
 		{E7744417-F7A5-43C0-874A-FDAC9F515884}.Release|x86.ActiveCfg = Release|Any CPU
 		{E7744417-F7A5-43C0-874A-FDAC9F515884}.Release|x86.Build.0 = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|x64.Build.0 = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Debug|x86.Build.0 = Debug|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|x64.ActiveCfg = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|x64.Build.0 = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|x86.ActiveCfg = Release|Any CPU
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -559,5 +573,6 @@ Global
 		{D68E7578-BCB0-49AE-B434-F080F6D334AB} = {7AF64900-EA34-4A93-9514-FEBC4648E39E}
 		{70F01CEB-A870-4A9F-9B8F-69C8870AAAF8} = {7AF64900-EA34-4A93-9514-FEBC4648E39E}
 		{E7744417-F7A5-43C0-874A-FDAC9F515884} = {8622758C-75DB-4067-AB13-7D9531A16E9E}
+		{E698C4B7-0403-4B7F-8EFF-4242525BAFA9} = {9AA2BCF0-19AB-4DD9-8D91-7D188E463806}
 	EndGlobalSection
 EndGlobal
