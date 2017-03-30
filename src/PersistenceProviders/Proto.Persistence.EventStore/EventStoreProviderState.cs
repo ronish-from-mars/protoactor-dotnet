@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
@@ -19,33 +20,29 @@ namespace Proto.Persistence.EventStore
             _connection = connection;
         }
 
-        private object DeserializeEvent(RecordedEvent recordedEvent)
-        {
-            return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(recordedEvent.Data), SerializationSettings.StandardSettings());
-        }
-
         public async Task GetEventsAsync(string actorName, long indexStart, Action<object> callback)
         {
             StreamEventsSlice currentSlice;
             var sliceStart = StreamPosition.Start;
-            var events = new List<ResolvedEvent>();
+            var events = new List<object>();
             do
             {
                 currentSlice = await _connection.ReadStreamEventsForwardAsync(actorName, sliceStart, 500, true);
                 sliceStart = currentSlice.NextEventNumber;
-                events.AddRange(currentSlice.Events);
+                events.AddRange(currentSlice.Events.Select(Deserialize));
             } while (!currentSlice.IsEndOfStream);
             
-            foreach (var evnt in events)
+            foreach (var @event in events)
             {
-                var metadata = evnt.OriginalEvent.Metadata;
-                var metaDataString = Encoding.UTF8.GetString(metadata);
-                var metaDataJson = JObject.Parse(metaDataString);
-                var typeInfo = metaDataJson.Property(TypeInfoKey).Value;
-                var eventType = Type.GetType((string)typeInfo);
-                var @event = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(evnt.Event.Data), eventType);
                 callback(@event);
             }
+        }
+
+        private object Deserialize(ResolvedEvent @event)
+        {
+            var typeInfo = GetValueFromMetadata(@event, TypeInfoKey);
+            var eventType = Type.GetType((string)typeInfo);
+            return JsonConvert.DeserializeObject(Encoding.UTF8.GetString(@event.Event.Data), eventType);
         }
 
         public async Task<Tuple<object, long>> GetSnapshotAsync(string actorName)
@@ -55,10 +52,17 @@ namespace Proto.Persistence.EventStore
                 currentSlice.Events.Length == 0 || 
                 currentSlice.Events[0].OriginalEvent.Metadata.Length == 0) return null;
             var resolvedEvent = currentSlice.Events[0];
-            var metaDataString = Encoding.UTF8.GetString(resolvedEvent.OriginalEvent.Metadata);
+            var snapshotIndex = GetValueFromMetadata(resolvedEvent, SnapshotIndexKey);
+            var @event = JsonConvert.DeserializeObject(Encoding.UTF8.GetString(resolvedEvent.Event.Data), SerializationSettings.StandardSettings());
+            return Tuple.Create(@event, (long)snapshotIndex);
+        }
+
+        private JToken GetValueFromMetadata(ResolvedEvent @event, string key)
+        {
+            var metadata = @event.OriginalEvent.Metadata;
+            var metaDataString = Encoding.UTF8.GetString(metadata);
             var metaDataJson = JObject.Parse(metaDataString);
-            var snapshotIndex = metaDataJson.Property(SnapshotIndexKey).Value;
-            return Tuple.Create(DeserializeEvent(resolvedEvent.Event), (long)snapshotIndex);
+            return metaDataJson.Property(key).Value;
         }
 
         public async Task PersistEventAsync(string actorName, long index, object @event)
