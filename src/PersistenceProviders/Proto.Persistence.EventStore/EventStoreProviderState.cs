@@ -75,7 +75,7 @@ namespace Proto.Persistence.EventStore
 
         public async Task PersistSnapshotAsync(string actorName, long index, object snapshot)
         {
-            await SaveEvent(actorName, index, snapshot, new Dictionary<string, object>
+            await SaveEvent(actorName + "-snapshots", index, snapshot, new Dictionary<string, object>
             {
                 {SnapshotIndexKey, index}
             });
