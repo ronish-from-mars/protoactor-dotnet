@@ -1,21 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.5;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard1.5</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="0.0.1-alpha" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.0-alpha-1" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_5</DefineConstants>
     <OutputPath>bin\Debug\netstandard1.5\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net461'">
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-  </PropertyGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\..\Proto.Actor\Proto.Actor.csproj" />
     <ProjectReference Include="..\..\Proto.Mailbox\Proto.Mailbox.csproj" />

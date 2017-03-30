@@ -23,7 +23,7 @@ namespace Proto.Persistence.EventStore
         public async Task GetEventsAsync(string actorName, long indexStart, Action<object> callback)
         {
             StreamEventsSlice currentSlice;
-            var sliceStart = StreamPosition.Start;
+            long sliceStart = StreamPosition.Start;
             var events = new List<object>();
             do
             {
@@ -67,7 +67,7 @@ namespace Proto.Persistence.EventStore
 
         public async Task PersistEventAsync(string actorName, long index, object @event)
         {
-            await SaveEvent(actorName, (int) index, @event, new Dictionary<string, object>
+            await SaveEvent(actorName, index, @event, new Dictionary<string, object>
             {
                 {TypeInfoKey, @event.GetType().AssemblyQualifiedName}
             });
@@ -75,7 +75,7 @@ namespace Proto.Persistence.EventStore
 
         public async Task PersistSnapshotAsync(string actorName, long index, object snapshot)
         {
-            await SaveEvent(actorName, (int)index, snapshot, new Dictionary<string, object>
+            await SaveEvent(actorName, index, snapshot, new Dictionary<string, object>
             {
                 {SnapshotIndexKey, index}
             });
@@ -87,7 +87,7 @@ namespace Proto.Persistence.EventStore
             var data = Encoding.UTF8.GetBytes(jsonString);
             var metaDataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metaData, SerializationSettings.StandardSettings()));
             var eventData = new EventData(Guid.NewGuid(), @event.GetType().Name, true, data, metaDataBytes);
-            var expectedVersion = (int) index - 1;
+            var expectedVersion = index - 1;
             await _connection.AppendToStreamAsync(streamName, expectedVersion, eventData);
         }
 
