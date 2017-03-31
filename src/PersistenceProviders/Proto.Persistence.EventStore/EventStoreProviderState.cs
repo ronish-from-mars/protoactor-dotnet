@@ -67,7 +67,7 @@ namespace Proto.Persistence.EventStore
 
         public async Task PersistEventAsync(string actorName, long index, object @event)
         {
-            await SaveEvent(actorName, index, @event, new Dictionary<string, object>
+            await SaveEvent(actorName, index - 1, @event, new Dictionary<string, object>
             {
                 {TypeInfoKey, @event.GetType().AssemblyQualifiedName}
             });
@@ -75,19 +75,20 @@ namespace Proto.Persistence.EventStore
 
         public async Task PersistSnapshotAsync(string actorName, long index, object snapshot)
         {
-            await SaveEvent(actorName + "-snapshots", index, snapshot, new Dictionary<string, object>
+            // TODO - what is index here? Index of the event stream? Or index of how many snapshots exist?
+            await SaveEvent(actorName + "-snapshots", ExpectedVersion.Any, snapshot, new Dictionary<string, object>
             {
-                {SnapshotIndexKey, index}
+                {SnapshotIndexKey, index} 
             });
         }
 
-        private async Task SaveEvent(string streamName, long index, object @event, Dictionary<string, object> metaData)
+        private async Task SaveEvent(string streamName, long expectedVersion, object @event, Dictionary<string, object> metaData)
         {
             var jsonString = JsonConvert.SerializeObject(@event, SerializationSettings.StandardSettings());
             var data = Encoding.UTF8.GetBytes(jsonString);
             var metaDataBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(metaData, SerializationSettings.StandardSettings()));
             var eventData = new EventData(Guid.NewGuid(), @event.GetType().Name, true, data, metaDataBytes);
-            var expectedVersion = index - 1;
+            
             await _connection.AppendToStreamAsync(streamName, expectedVersion, eventData);
         }
 
