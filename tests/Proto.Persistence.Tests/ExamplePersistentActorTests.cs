@@ -191,8 +191,9 @@ namespace Proto.Persistence.Tests
             var actorName = Guid.NewGuid().ToString();
             var inMemoryProviderState = new InMemoryProviderState();
             var provider = new InMemoryProvider(inMemoryProviderState);
-            var props = Actor.FromProducer(() => new ExamplePersistentActor())
-                .WithReceiveMiddleware(Persistence.Using(provider))
+            var props = Actor.FromProducer(() => new ExampleActor())
+                .WithReceiveMiddleware(Snapshots.Using(provider))
+                .WithReceiveMiddleware(Events.Using(provider))
                 .WithMailbox(() => new TestMailbox());
             var pid = Actor.SpawnNamed(props, actorName);
             return (pid, props, actorName, inMemoryProviderState);
@@ -223,25 +224,21 @@ namespace Proto.Persistence.Tests
         public int Amount { get; set; }
     }
 
-    internal class ExamplePersistentActor : IPersistentActor
+    internal class ExampleActor : ISnapshots, IEventSourced
     {
         private State _state = new State{Value = 1};
-        public Persistence Persistence { get; set; }
+        public Snapshots Snapshots { get; set; }
+        public Events Events { get; set; }
 
-        public void UpdateState(object message)
+        public void Apply(Snapshot snapshot)
         {
-            switch (message)
+            if (snapshot.State is State ss)
             {
-                case Event e:
-                    Apply(e);
-                    break;
-                case Snapshot s:
-                    Apply(s);
-                    break;
+                _state = ss;
             }
         }
 
-        private void Apply(Event @event)
+        public void Apply(Event @event)
         {
             switch (@event.Data)
             {
@@ -250,15 +247,7 @@ namespace Proto.Persistence.Tests
                     break;
             }
         }
-
-        private void Apply(Snapshot snapshot)
-        {
-            if (snapshot.State is State ss)
-            {
-                _state = ss;
-            }
-        }
-
+        
         public async Task ReceiveAsync(IContext context)
         {
             switch (context.Message)
@@ -267,13 +256,13 @@ namespace Proto.Persistence.Tests
                     context.Sender.Tell(_state.Value);
                     break;
                 case GetIndex msg:
-                    context.Sender.Tell(Persistence.Index);
+                    context.Sender.Tell(Snapshots.Index);
                     break;
                 case RequestSnapshot msg:
-                    await Persistence.PersistSnapshotAsync(new State { Value = _state.Value });
+                    await Snapshots.PersistSnapshotAsync(new State { Value = _state.Value }, Events.Index);
                     break;
                 case Multiply msg:
-                    await Persistence.PersistEventAsync(new Multiplied { Amount = msg.Amount });
+                    await Events.PersistEventAsync(new Multiplied { Amount = msg.Amount });
                     break;
             }
         }

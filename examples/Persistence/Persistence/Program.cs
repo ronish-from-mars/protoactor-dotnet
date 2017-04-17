@@ -21,33 +21,22 @@ class Program
         var provider = new SqliteProvider();
 
         var props = Actor.FromProducer(() => new MyPersistenceActor())
-            .WithReceiveMiddleware(Persistence.Using(provider));
+            .WithReceiveMiddleware(Snapshots.Using(provider))
+            .WithReceiveMiddleware(Events.Using(provider));
 
         var pid = Actor.Spawn(props);
 
         Console.ReadLine();
     }
 
-    class MyPersistenceActor : IPersistentActor
+    class MyPersistenceActor : ISnapshots, IEventSourced
     {
         private PID _loopActor;
         private State _state = new State();
-        public Persistence Persistence { get; set; }
+        public Snapshots Snapshots { get; set; }
+        public Events Events { get; set; }
 
-        public void UpdateState(object message)
-        {
-            switch (message)
-            {
-                case Event e:
-                    Apply(e);
-                    break;
-                case Snapshot s:
-                    Apply(s);
-                    break;
-            }
-        }
-
-        private void Apply(Event @event)
+        public void Apply(Event @event)
         {
             switch (@event)
             {
@@ -64,7 +53,7 @@ class Program
             }
         }
 
-        private void Apply(Snapshot snapshot)
+        public void Apply(Snapshot snapshot)
         {
             switch (snapshot)
             {
@@ -72,7 +61,7 @@ class Program
                     if (msg.State is State ss)
                     {
                         _state = ss;
-                        Console.WriteLine("MyPersistenceActor - RecoverSnapshot = Snapshot.Index = {0}, Snapshot.State = {1}", Persistence.Index, ss.Name);
+                        Console.WriteLine("MyPersistenceActor - RecoverSnapshot = Snapshot.Index = {0}, Snapshot.State = {1}", Snapshots.Index, ss.Name);
                     }
                     break;
             }
@@ -127,8 +116,8 @@ class Program
         {
             Console.WriteLine("MyPersistenceActor - RequestSnapshot");
 
-            await Persistence.PersistSnapshotAsync(_state);
-            Console.WriteLine("MyPersistenceActor - PersistedSnapshot = Snapshot.Index = {0}, Snapshot.State = {1}", Persistence.Index, _state);
+            await Snapshots.PersistSnapshotAsync(_state, Events.Index);
+            Console.WriteLine("MyPersistenceActor - PersistedSnapshot = Snapshot.Index = {0}, Snapshot.State = {1}", Snapshots.Index, _state);
             context.Self.Tell(new TimeToSnapshot());
         }
 
@@ -169,7 +158,7 @@ class Program
 
             _state.Name = message.Name;
 
-            await Persistence.PersistEventAsync(new RenameEvent { Name = message.Name });
+            await Events.PersistEventAsync(new RenameEvent { Name = message.Name });
         }
     }
 
