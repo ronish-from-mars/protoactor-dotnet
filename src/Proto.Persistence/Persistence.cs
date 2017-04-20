@@ -9,16 +9,63 @@ using System.Threading.Tasks;
 
 namespace Proto.Persistence
 {
+    public interface ISnapshotStrategy
+    {
+        bool ShouldTakeSnapshot(long index);
+    }
+
+    public class EventsCountStrategy : ISnapshotStrategy
+    {
+        private readonly int _eventsPerSnapshot;
+
+        public EventsCountStrategy(int eventsPerSnapshot)
+        {
+            _eventsPerSnapshot = eventsPerSnapshot;
+        }
+
+        public bool ShouldTakeSnapshot(long index)
+        {
+            return index % _eventsPerSnapshot == 0;
+        }
+    }
+
+    public class NoSnapshots : ISnapshotStrategy {
+        public bool ShouldTakeSnapshot(long index)
+        {
+            return false;
+        }
+    }
+
+    public class TimeStrategy : ISnapshotStrategy
+    {
+        private readonly TimeSpan _interval;
+        private readonly Func<DateTime> _getNow;
+        private DateTime _lastTaken = DateTime.MinValue;
+
+        public TimeStrategy(TimeSpan interval, Func<DateTime> getNow = null)
+        {
+            _interval = interval;
+            _getNow = getNow ?? (() => DateTime.Now);
+        }
+        
+        public bool ShouldTakeSnapshot(long index)
+        {
+            return _lastTaken.Add(_interval) >= _getNow();
+        }
+    }
+
     public class Persistence
     {
         private IProviderState _state;
         private IPersistentActor _actor;
+        private ISnapshotStrategy _snapshotStrategy;
         public long Index { get; private set; }
         private IContext _context;
         private string ActorId => _context.Self.Id;
 
-        public async Task InitAsync(IProvider provider, IContext context, IPersistentActor actor)
+        public async Task InitAsync(IProvider provider, IContext context, IPersistentActor actor, ISnapshotStrategy snapshotStrategy = null)
         {
+            _snapshotStrategy = snapshotStrategy ?? new NoSnapshots();
             _state = provider.GetState();
             _context = context;
             _actor = actor;
@@ -43,6 +90,10 @@ namespace Proto.Persistence
             Index++;
             await _state.PersistEventAsync(ActorId, Index, @event);
             _actor.UpdateState(new PersistedEvent(@event, Index));
+            if (_snapshotStrategy.ShouldTakeSnapshot(Index))
+            {
+                await PersistSnapshotAsync(_actor.GetState());
+            }
         }
 
         public async Task PersistSnapshotAsync(object snapshot)
@@ -60,7 +111,7 @@ namespace Proto.Persistence
             await _state.DeleteEventsAsync(ActorId, inclusiveToIndex);
         }
 
-        public static Func<Receive, Receive> Using(IProvider provider)
+        public static Func<Receive, Receive> Using(IProvider provider, ISnapshotStrategy snapshotStrategy = null)
         {
             return next => async context =>
             {
@@ -70,7 +121,7 @@ namespace Proto.Persistence
                         if (context.Actor is IPersistentActor actor)
                         {
                             actor.Persistence = new Persistence();
-                            await actor.Persistence.InitAsync(provider, context, actor);
+                            await actor.Persistence.InitAsync(provider, context, actor, snapshotStrategy ?? new NoSnapshots());
                         }
                         break;
                 }

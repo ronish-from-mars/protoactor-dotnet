@@ -243,6 +243,11 @@ namespace Proto.Persistence.Tests
             }
         }
 
+        public object GetState()
+        {
+            return _state;
+        }
+
         private void Apply(Event @event)
         {
             switch (@event.Data)

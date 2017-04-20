@@ -10,5 +10,6 @@ namespace Proto.Persistence
     {
         Persistence Persistence { get; set; }
         void UpdateState(object message);
+        object GetState();
     }
 }

@@ -49,6 +49,11 @@ class Program
             }
         }
 
+        public object GetState()
+        {
+            return _state;
+        }
+
         private void Apply(Event @event)
         {
             switch (@event)
