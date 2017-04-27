@@ -34,37 +34,6 @@ namespace Proto.Persistence
             _applySnapshot = applySnapshot;
         }
 
-        public static Persistence WithEventSourcing(IProvider provider, string actorId, Action<Event> applyEvent)
-        {
-            if (applyEvent == null)
-            {
-                throw new ArgumentNullException(nameof(applyEvent));
-            }
-            return new Persistence(provider, actorId, applyEvent, null);
-        }
-
-        public static Persistence WithSnapshotting(IProvider provider, string actorId, Action<Snapshot> applySnapshot)
-        {
-            if (applySnapshot == null)
-            {
-                throw new ArgumentNullException(nameof(applySnapshot));
-            }
-            return new Persistence(provider, actorId, null, applySnapshot);
-        }
-
-        public static Persistence WithEventSourcingAndSnapshotting(IProvider provider, string actorId, Action<Event> applyEvent, Action<Snapshot> applySnapshot)
-        {
-            if (applyEvent == null)
-            {
-                throw new ArgumentNullException(nameof(applyEvent));
-            }
-            if (applySnapshot == null)
-            {
-                throw new ArgumentNullException(nameof(applySnapshot));
-            }
-            return new Persistence(provider, actorId, applyEvent, applySnapshot);
-        }
-
         public async Task RecoverStateAsync()
         {
             if (UsingSnapshotting)
@@ -112,6 +81,52 @@ namespace Proto.Persistence
         public async Task DeleteEventsAsync(long inclusiveToIndex)
         {
             await _state.DeleteEventsAsync(_actorId, inclusiveToIndex);
+        }
+
+        public static PersistenceBuilder Use(IProvider provider)
+        {
+            return new PersistenceBuilder(provider);
+        }
+
+        public class PersistenceBuilder
+        {
+            private readonly IProvider _provider;
+
+            public PersistenceBuilder(IProvider provider)
+            {
+                _provider = provider;
+            }
+
+            public Persistence WithEventSourcing(string actorId, Action<Event> applyEvent)
+            {
+                if (applyEvent == null)
+                {
+                    throw new ArgumentNullException(nameof(applyEvent));
+                }
+                return new Persistence(_provider, actorId, applyEvent, null);
+            }
+
+            public Persistence WithSnapshotting(string actorId, Action<Snapshot> applySnapshot)
+            {
+                if (applySnapshot == null)
+                {
+                    throw new ArgumentNullException(nameof(applySnapshot));
+                }
+                return new Persistence(_provider, actorId, null, applySnapshot);
+            }
+
+            public Persistence WithEventSourcingAndSnapshotting(string actorId, Action<Event> applyEvent, Action<Snapshot> applySnapshot)
+            {
+                if (applyEvent == null)
+                {
+                    throw new ArgumentNullException(nameof(applyEvent));
+                }
+                if (applySnapshot == null)
+                {
+                    throw new ArgumentNullException(nameof(applySnapshot));
+                }
+                return new Persistence(_provider, actorId, applyEvent, applySnapshot);
+            }
         }
     }
 

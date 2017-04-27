@@ -233,7 +233,7 @@ namespace Proto.Persistence.Tests
 
         public ExamplePersistentActor(IProvider provider, string persistenceId)
         {
-            _persistence = Persistence.WithEventSourcingAndSnapshotting(provider, persistenceId, ApplyEvent, ApplySnapshot);
+            _persistence = Persistence.Use(provider).WithEventSourcingAndSnapshotting(persistenceId, ApplyEvent, ApplySnapshot);
         }
 
         private void ApplyEvent(Event @event)
