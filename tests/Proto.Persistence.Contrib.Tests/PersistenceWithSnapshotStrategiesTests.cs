@@ -1,11 +1,16 @@
 using System;
-using Proto.Persistence.SnapshotStrategies;
+using Proto.Persistence.Contrib.SnapshotStrategies;
 using Xunit;
 
-namespace Proto.Persistence.Tests
+namespace Proto.Persistence.Contrib.Tests
 {
-    public class PersistenceWithSnapshotStrategiesTests
+    public partial class PersistenceWithSnapshotStrategiesTests
     {
+        internal class Multiplied
+        {
+            public int Amount { get; set; }
+        }
+
         [Fact]
         public async void GivenAnIntervalStrategy_ShouldSaveSnapshotAccordingly()
         {
@@ -13,7 +18,7 @@ namespace Proto.Persistence.Tests
             var inMemoryProviderState = new InMemoryProviderState();
             var provider = new InMemoryProvider(inMemoryProviderState);
             var actorId = Guid.NewGuid().ToString();
-            var persistence = Persistence.WithEventSourcingAndSnapshotting(provider, actorId, 
+            var persistence = new PersistenceWithSnapshotStrategy(provider, actorId, 
                 @event => { state = state * (@event.Data as Multiplied).Amount; },
                 snapshot => { state = (int)snapshot.State; }, 
                 new IntervalStrategy(1), () => state);

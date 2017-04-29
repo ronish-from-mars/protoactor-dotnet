@@ -1,4 +1,4 @@
-﻿namespace Proto.Persistence
+﻿namespace Proto.Persistence.Contrib
 {
     public interface ISnapshotStrategy
     {

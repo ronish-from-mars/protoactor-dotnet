@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Proto.Persistence.SnapshotStrategies
+namespace Proto.Persistence.Contrib.SnapshotStrategies
 {
     public class EventTypeStrategy : ISnapshotStrategy
     {

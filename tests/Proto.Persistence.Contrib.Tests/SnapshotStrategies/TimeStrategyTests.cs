@@ -1,8 +1,8 @@
 using System;
-using Proto.Persistence.SnapshotStrategies;
+using Proto.Persistence.Contrib.SnapshotStrategies;
 using Xunit;
 
-namespace Proto.Persistence.Tests.SnapshotStrategies
+namespace Proto.Persistence.Contrib.Tests.SnapshotStrategies
 {
     public class TimeStrategyTests
     {
