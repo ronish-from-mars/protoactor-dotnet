@@ -4,7 +4,7 @@
     <RootNamespace>Proto</RootNamespace>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>netstandard1.5</TargetFramework>
+    <TargetFramework>netstandard1.2</TargetFramework>
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>
