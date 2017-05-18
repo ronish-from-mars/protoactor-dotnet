@@ -9,7 +9,7 @@ namespace Proto.Mailbox.Tests
         public void WhenMailboxOverflows_OverflowActionCalledWithMessage()
         {
             object overflowMessage = null;
-            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowMessage = msg, TimeSpan.FromSeconds(1));
+            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowMessage = msg, TimeSpan.FromMilliseconds(10));
             mailbox.Push("first message");
             Assert.Null(overflowMessage);
             var secondMessage = "second message";
@@ -21,7 +21,7 @@ namespace Proto.Mailbox.Tests
         public void WhenMailboxOverflows_OverflowActionCalledOnAllSubsequentMessages()
         {
             int overflowActionCallCount = 0;
-            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowActionCallCount++, TimeSpan.FromSeconds(1));
+            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowActionCallCount++, TimeSpan.FromMilliseconds(10));
             mailbox.Push("first message"); // does not call overflow
             for (int i = 0; i < 10; i++) {
                 mailbox.Push(i);
@@ -34,7 +34,7 @@ namespace Proto.Mailbox.Tests
         public void WhenMailboxOverflows_CurrentMessagesRemainInMailbox()
         {
             object overflowMessage = null;
-            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowMessage = msg, TimeSpan.FromSeconds(1));
+            var mailbox = new NonBlockingBoundedMailbox(1, (msg) => overflowMessage = msg, TimeSpan.FromMilliseconds(10));
             mailbox.Push("first message");
             mailbox.Push("second message");
             Assert.Equal("first message", mailbox.Pop());
