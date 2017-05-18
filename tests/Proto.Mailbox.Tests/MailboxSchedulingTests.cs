@@ -99,11 +99,9 @@ namespace Proto.Mailbox.Tests
             mailbox.RegisterHandlers(mailboxHandler, mailboxHandler);
 
             var msg1 = new TestMessage();
-            mailbox.PostUserMessage(msg1);
+            
             msg1.TaskCompletionSource.SetResult(0);
-
-            Thread.Sleep(500); // wait for mailbox to finish
-
+            mailbox.PostUserMessage(msg1);
             Assert.True(mailbox.Status == MailboxStatus.Idle, "Mailbox should be set back to Idle after completion of message.");
         }
     }

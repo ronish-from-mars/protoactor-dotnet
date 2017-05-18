@@ -28,7 +28,7 @@ namespace Proto.TestFixtures
 
         public void Schedule(Func<Task> runner)
         {
-            runner();
+            runner().Wait();
         }
     }
 }
